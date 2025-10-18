@@ -37,7 +37,7 @@ public class Bullet : MonoBehaviour
     }
     public void Initialize()
     {
-        rb.AddForce(transform.right, ForceMode2D.Impulse);
+        rb.AddForce(transform.forward, ForceMode2D.Force);
     }
 
     public void OnCollisionEnter2D(Collision2D collision)
