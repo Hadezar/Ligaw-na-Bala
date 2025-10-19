@@ -12,17 +12,15 @@ public class Key : MonoBehaviour
         gotKey = false;
     }
 
-    private void Update()
-    {
-        if (gotKey == true)
-        {
-            SceneManager.LoadSceneAsync(2);
-        }
-    }
-
     private void OnTriggerEnter2D(Collider2D collision)
     {
         if (collision.CompareTag("Player"))
+        {
+            gotKey = true;
+            Destroy(gameObject);
+        }
+
+        if (collision.CompareTag("Bullet"))
         {
             gotKey = true;
             Destroy(gameObject);

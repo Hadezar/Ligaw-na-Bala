@@ -1,3 +1,4 @@
+using Cinemachine;
 using System.Collections;
 using System.Collections.Generic;
 using Unity.VisualScripting;
@@ -6,34 +7,81 @@ using UnityEngine.SceneManagement;
 
 public class Movement : MonoBehaviour
 {
-    Rigidbody2D rb;
-    public Bullet bullet;
-    // Start is called before the first frame update
-    void Start()
+    public float moveSpeed = 5f;
+    public GameObject bulletPrefab;
+    public CinemachineVirtualCamera bulletVCamera;
+    private bool isCameraFollowingBullet = false;
+    public static Bullet activeBullet = null;
+
+
+    private void Start()
     {
-        rb = GetComponent<Rigidbody2D>();
+        bulletVCamera.gameObject.SetActive(false);
     }
 
-    // Update is called once per frame
     void Update()
     {
-        if (bullet.bulletSpawned == false)
+        if (activeBullet != null)
         {
-            if (Input.GetKey(KeyCode.A))
-            {
-                rb.transform.rotation = Quaternion.Euler(0, -180, 0);
-                rb.transform.position = new Vector2(rb.transform.position.x - 1 * Time.fixedDeltaTime, rb.transform.position.y);
+            if (!isCameraFollowingBullet)
+            {               
+                SwitchToBulletCam(activeBullet.transform);
             }
-            if (Input.GetKey(KeyCode.D))
+            return;
+        }
+        else
+        {
+            if (isCameraFollowingBullet)
             {
-                rb.transform.rotation = Quaternion.Euler(0, 0, 0);
-                rb.transform.position = new Vector2(rb.transform.position.x + 1 * Time.fixedDeltaTime, rb.transform.position.y);
+                SwitchToPlayerCam();
             }
-        }           
+        }
+        float horizontalInput = Input.GetAxis("Horizontal");
+        Vector3 movement = new Vector3(horizontalInput, 0f, 0f) * moveSpeed * Time.deltaTime;
+        transform.Translate(movement);
+
+        if (horizontalInput > 0) // Moving Right (D key)
+        {
+            transform.localScale = new Vector3(1f, 1f, 1f);
+        }
+        else if (horizontalInput < 0) // Moving Left (A key)
+        {
+            transform.localScale = new Vector3(-1f, 1f, 1f);
+        }
+
+        if (Input.GetMouseButtonDown(0))
+        {
+            if (activeBullet == null) // Only shoot if no bullet is active
+            {
+                bulletVCamera.gameObject.SetActive(true);
+                Vector3 spawnPosition = transform.position;
+                GameObject bulletGO = Instantiate(bulletPrefab, spawnPosition, Quaternion.identity);
+                Bullet newBullet = bulletGO.GetComponent<Bullet>();
+                activeBullet = newBullet;
+                SwitchToBulletCam(bulletGO.transform);
+            }
+        }
     }
 
-    private void OnTriggerEnter2D(Collider2D collision)
+    // --- Camera Switching Functions ---
+
+    private void SwitchToBulletCam(Transform target)
     {
-        
+        if (bulletVCamera != null)
+        {
+            bulletVCamera.Follow = target;
+            bulletVCamera.Priority = 12;
+            isCameraFollowingBullet = true;
+        }
+    }
+
+    public void SwitchToPlayerCam()
+    {
+        if (bulletVCamera != null)
+        {
+            bulletVCamera.Priority = 8;
+            bulletVCamera.Follow = null;
+            isCameraFollowingBullet = false;
+        }
     }
 }

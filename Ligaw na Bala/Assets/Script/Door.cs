@@ -7,14 +7,27 @@ using UnityEngine.SceneManagement;
 public class Door : MonoBehaviour
 {
     public GameObject needKeyGO;
-
-    private float screenTime;
-
+    public GameManager gm;
     public Key key;
+
+    private float screenTime = 2f;
+
     private void Start()
     {
-        screenTime = 2f;
-        needKeyGO.SetActive(false);
+
+    }
+
+    private void Update()
+    {
+        if (needKeyGO.activeInHierarchy)
+        {
+            screenTime -= Time.deltaTime;
+            if (screenTime <= 0)
+            {
+                needKeyGO.SetActive(false);
+                screenTime = 2f;
+            }
+        }
     }
 
     private void OnTriggerEnter2D(Collider2D collision)
@@ -23,18 +36,12 @@ public class Door : MonoBehaviour
         {
             if (key.gotKey == true)
             {
-                SceneManager.LoadSceneAsync(2);
+                SceneManager.LoadSceneAsync(gm.currentBuildIndex + 1);                
             }
-            else
+            else if (key.gotKey == false)
             {
-                needKeyGO.SetActive(true);
-                screenTime -= Time.deltaTime;
-                if (screenTime <= 0)
-                {
-                    needKeyGO.SetActive(false);
-                    screenTime = 2f;
-                }
-            }
+                needKeyGO.SetActive(true);                
+            }           
         }
     }
 }

@@ -1,50 +1,54 @@
 using System.Collections;
 using System.Collections.Generic;
+using System.Globalization;
 using UnityEngine;
 
 public class Bullet : MonoBehaviour
 {
-    Rigidbody2D rb;
-    public bool bulletSpawned;
-    void Awake()
-    {
-        rb = GetComponent<Rigidbody2D>();
-    }
-    private void Start()
-    {
-        bulletSpawned = false;
-    }
+    [Tooltip("Speed of the bullet.")]
+    public float bulletSpeed = 5f;
+    private Vector2 moveDirection;
+
     void Update()
     {
-        rb.transform.position = new Vector2(rb.transform.position.x + 1 * Time.fixedDeltaTime, rb.transform.position.y);
-        if (Input.GetKey(KeyCode.A))
+        Vector3 mousePos = Input.mousePosition;
+        if (Camera.main != null)
         {
-            rb.transform.rotation = Quaternion.Euler(0, -1800, 0);
+            mousePos.z = Camera.main.nearClipPlane;
         }
-        if (Input.GetKey(KeyCode.D))
+        else
         {
-            rb.transform.rotation = Quaternion.Euler(0, 0, 0);
+            mousePos.z = 10f;
         }
-        if (Input.GetKey(KeyCode.W))
-        {
-            rb.transform.rotation = Quaternion.Euler(0,0,- 90);
-        }
-        if (Input.GetKey(KeyCode.W))
-        {
-            rb.transform.rotation = Quaternion.Euler(0, 0, 90);
-        }
-        rb.transform.position = new Vector2(rb.transform.position.x + 1 * Time.fixedDeltaTime, rb.transform.position.y);
-    }
-    public void Initialize()
-    {
-        rb.AddForce(transform.right, ForceMode2D.Impulse);
+        Vector3 worldMousePos = Camera.main.ScreenToWorldPoint(mousePos);
+        worldMousePos.z = 0f;
+        Vector2 targetDirection = (worldMousePos - transform.position).normalized;
+        transform.Translate(targetDirection * bulletSpeed * Time.deltaTime);
     }
 
-    public void OnCollisionEnter2D(Collision2D collision)
+    private void OnTriggerEnter2D(Collider2D collision)
     {
-        if (collision.collider.CompareTag("Wall"))
+        if (collision.CompareTag("Wall"))
         {
-            Destroy(gameObject);
+            DestroyBullet();
         }
+        if (collision.CompareTag("Key"))
+        {
+            DestroyBullet();
+        }
+    }
+
+    public void DestroyBullet()
+    {
+        if (Movement.activeBullet == this)
+        {
+            Movement.activeBullet = null;
+            Movement playerController = FindObjectOfType<Movement>();
+            if (playerController != null)
+            {
+                playerController.SwitchToPlayerCam();
+            }
+        }
+        Destroy(gameObject);
     }
 }
