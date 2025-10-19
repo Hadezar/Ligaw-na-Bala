@@ -9,14 +9,16 @@ public class Movement : MonoBehaviour
 {
     public float moveSpeed = 5f;
     public GameObject bulletPrefab;
+    public Transform shootingPoint; 
     public CinemachineVirtualCamera bulletVCamera;
     private bool isCameraFollowingBullet = false;
     public static Bullet activeBullet = null;
-
+    private Animator animator;
 
     private void Start()
     {
         bulletVCamera.gameObject.SetActive(false);
+        animator = GetComponent<Animator>();
     }
 
     void Update()
@@ -24,9 +26,11 @@ public class Movement : MonoBehaviour
         if (activeBullet != null)
         {
             if (!isCameraFollowingBullet)
-            {               
+            {
                 SwitchToBulletCam(activeBullet.transform);
             }
+            animator.SetBool("isShooting", true);
+            animator.SetBool("isWalking", false);
             return;
         }
         else
@@ -35,26 +39,31 @@ public class Movement : MonoBehaviour
             {
                 SwitchToPlayerCam();
             }
+            animator.SetBool("isShooting", false);
         }
+
         float horizontalInput = Input.GetAxis("Horizontal");
+        animator.SetBool("isWalking", Mathf.Abs(horizontalInput) > 0.01f);
+
         Vector3 movement = new Vector3(horizontalInput, 0f, 0f) * moveSpeed * Time.deltaTime;
         transform.Translate(movement);
 
-        if (horizontalInput > 0) // Moving Right (D key)
+        if (horizontalInput > 0)
         {
             transform.localScale = new Vector3(1f, 1f, 1f);
         }
-        else if (horizontalInput < 0) // Moving Left (A key)
+        else if (horizontalInput < 0)
         {
             transform.localScale = new Vector3(-1f, 1f, 1f);
         }
 
         if (Input.GetMouseButtonDown(0))
         {
-            if (activeBullet == null) // Only shoot if no bullet is active
+            if (activeBullet == null)
             {
                 bulletVCamera.gameObject.SetActive(true);
-                Vector3 spawnPosition = transform.position;
+          
+                Vector3 spawnPosition = shootingPoint.position;
                 GameObject bulletGO = Instantiate(bulletPrefab, spawnPosition, Quaternion.identity);
                 Bullet newBullet = bulletGO.GetComponent<Bullet>();
                 activeBullet = newBullet;
@@ -62,8 +71,6 @@ public class Movement : MonoBehaviour
             }
         }
     }
-
-    // --- Camera Switching Functions ---
 
     private void SwitchToBulletCam(Transform target)
     {
